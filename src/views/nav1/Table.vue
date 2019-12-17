@@ -7,7 +7,7 @@
 					<el-input v-model="filters.name" placeholder="姓名"></el-input>
 				</el-form-item>
 				<el-form-item>
-					<el-button type="primary" v-on:click="getUsers">查询</el-button>
+					<el-button type="primary" v-on:click="getTopics">查询</el-button>
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="handleAdd">新增</el-button>
@@ -16,20 +16,16 @@
 		</el-col>
 
 		<!--列表-->
-		<el-table :data="users" highlight-current-row v-loading="listLoading" @selection-change="selsChange" style="width: 100%;">
-			<el-table-column type="selection" width="55">
+		<el-table :data="topics" highlight-current-row v-loading="listLoading" @selection-change="selsChange" style="width: 100%;">
+			<el-table-column prop="id" label="ID" width="120" sortable>
 			</el-table-column>
-			<el-table-column type="index" width="60">
+			<el-table-column prop="topName" label="话题名" width="120" sortable>
 			</el-table-column>
-			<el-table-column prop="name" label="姓名" width="120" sortable>
+			<el-table-column prop="topNote" label="性别" width="100"  sortable>
 			</el-table-column>
-			<el-table-column prop="sex" label="性别" width="100" :formatter="formatSex" sortable>
+			<el-table-column prop="topImage" label="年龄" width="120" sortable>
 			</el-table-column>
-			<el-table-column prop="age" label="年龄" width="100" sortable>
-			</el-table-column>
-			<el-table-column prop="birth" label="生日" width="120" sortable>
-			</el-table-column>
-			<el-table-column prop="addr" label="地址" min-width="180" sortable>
+			<el-table-column prop="createTime" label="创建时间" width="120" sortable>
 			</el-table-column>
 			<el-table-column label="操作" width="150">
 				<template scope="scope">
@@ -105,19 +101,23 @@
 </template>
 
 <script>
-	import util from '../../common/js/util'
+	import util from '../../common/js/util';
+	import axios from 'axios';;
 	//import NProgress from 'nprogress'
-	import { getUserListPage, removeUser, batchRemoveUser, editUser, addUser } from '../../api/api';
+	import { getTopicListPage, removeUser, batchRemoveUser, editUser, addUser,getList } from '../../api/api';
 
 	export default {
 		data() {
 			return {
 				filters: {
-					name: ''
+					
 				},
-				users: [],
+				topics: [],
 				total: 0,
-				page: 1,
+				page: {
+					currentPage: 1,
+					pageSize: 10
+				},
 				listLoading: false,
 				sels: [],//列表选中列
 
@@ -163,22 +163,38 @@
 			},
 			handleCurrentChange(val) {
 				this.page = val;
-				this.getUsers();
+				this.getTopics();
 			},
 			//获取用户列表
-			getUsers() {
+			getTopics() {
 				let para = {
 					page: this.page,
-					name: this.filters.name
+				};
+				let body = {
+					//name: this.filters
 				};
 				this.listLoading = true;
 				//NProgress.start();
-				getUserListPage(para).then((res) => {
-					this.total = res.data.total;
-					this.users = res.data.users;
+				// getTopicListPage(para,body).then((res) => {
+				// 	this.total = res.data.data.total;
+				// 	this.topics = res.data.data.records;
+				// 	this.listLoading = false;
+				// 	//NProgress.done();
+				// }).catch(function (error) {
+				// 	console.log("失败");
+				//     console.log(error);
+				//   })
+				// ;
+				getList(para).then((res) => {
+					this.total = res.data.data.total;
+					this.topics = res.data.data.records;
 					this.listLoading = false;
 					//NProgress.done();
-				});
+				}).catch(function (error) {
+					console.log("失败");
+				    console.log(error);
+				  })
+				;
 			},
 			//删除
 			handleDel: function (index, row) {
@@ -195,7 +211,7 @@
 							message: '删除成功',
 							type: 'success'
 						});
-						this.getUsers();
+						this.getTopics();
 					});
 				}).catch(() => {
 
@@ -235,7 +251,7 @@
 								});
 								this.$refs['editForm'].resetFields();
 								this.editFormVisible = false;
-								this.getUsers();
+								this.getTopics();
 							});
 						});
 					}
@@ -259,7 +275,7 @@
 								});
 								this.$refs['addForm'].resetFields();
 								this.addFormVisible = false;
-								this.getUsers();
+								this.getTopics();
 							});
 						});
 					}
@@ -284,7 +300,7 @@
 							message: '删除成功',
 							type: 'success'
 						});
-						this.getUsers();
+						this.getTopics();
 					});
 				}).catch(() => {
 
@@ -292,7 +308,7 @@
 			}
 		},
 		mounted() {
-			this.getUsers();
+			this.getTopics();
 		}
 	}
 
