@@ -1,33 +1,52 @@
 <template>
 	<section>
 		<!--工具条-->
-		<el-col :span="24" class="toolbar" style="padding-bottom: 0px;">
-			<el-form :inline="true" :model="filters">
-				<el-form-item>
-					<el-input v-model="filters.name" placeholder="姓名"></el-input>
+		<el-col :span="240" class="toolbar" style="padding-bottom: 0px;">
+			<el-form :inline="true" :model="filters" ref='search'>
+				<el-form-item  label="话题名" prop="topName">
+					<el-input v-model="filters.topName" ></el-input>
+				</el-form-item>
+				<el-form-item  label="话题备注" prop="topNote">
+					<el-input v-model="filters.topNote" ></el-input>
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" v-on:click="getTopics">查询</el-button>
 				</el-form-item>
 				<el-form-item>
-					<el-button type="primary" @click="handleAdd">新增</el-button>
+					<el-button  v-on:click="reset">重置</el-button>
 				</el-form-item>
 			</el-form>
 		</el-col>
+		<el-form>
+			<el-form-item>
+				<el-button type="primary" @click="handleAdd">新增</el-button>
+			</el-form-item>
+		</el-form>
 
 		<!--列表-->
 		<el-table :data="topics" highlight-current-row v-loading="listLoading" @selection-change="selsChange" style="width: 100%;">
+			<el-table-column type="selection" width="55">
+			</el-table-column>
 			<el-table-column prop="id" label="ID" width="120" sortable>
 			</el-table-column>
-			<el-table-column prop="topName" label="话题名" width="120" sortable>
+			<el-table-column prop="topName" label="话题名" width="180" sortable>
 			</el-table-column>
-			<el-table-column prop="topNote" label="性别" width="100"  sortable>
+			<el-table-column prop="topNote" label="话题备注" width="180"  sortable>
 			</el-table-column>
-			<el-table-column prop="topImage" label="年龄" width="120" sortable>
+			<el-table-column prop="topImage" label="话题图片" width="180" sortable>
+				<template slot-scope="scope">     
+					   <el-popover
+					       placement="right"
+					       title=""
+					       trigger="click">
+					       <img :src="scope.row.topImage" min-width="300px" height="300px"/>
+					       <img slot="reference" :src="scope.row.topImage" :alt="scope.row.topImage" style="max-height: 70px;max-width: 70px">
+					      </el-popover>
+				</template>
 			</el-table-column>
-			<el-table-column prop="createTime" label="创建时间" width="120" sortable>
+			<el-table-column prop="createTime" label="创建时间" width="180" sortable>
 			</el-table-column>
-			<el-table-column label="操作" width="150">
+			<el-table-column label="操作" width="180">
 				<template scope="scope">
 					<el-button size="small" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
 					<el-button type="danger" size="small" @click="handleDel(scope.$index, scope.row)">删除</el-button>
@@ -45,24 +64,29 @@
 		<!--编辑界面-->
 		<el-dialog title="编辑" v-model="editFormVisible" :close-on-click-modal="false">
 			<el-form :model="editForm" label-width="80px" :rules="editFormRules" ref="editForm">
-				<el-form-item label="姓名" prop="name">
-					<el-input v-model="editForm.name" auto-complete="off"></el-input>
+				<el-form-item label="话题名">
+					<el-input v-model="editForm.topName" :min="0" :max="200"></el-input>
 				</el-form-item>
-				<el-form-item label="性别">
-					<el-radio-group v-model="editForm.sex">
-						<el-radio class="radio" :label="1">男</el-radio>
-						<el-radio class="radio" :label="0">女</el-radio>
-					</el-radio-group>
+				<el-form-item label="话题备注">
+					<el-input v-model="editForm.topNote" :min="0" :max="200"></el-input>
 				</el-form-item>
-				<el-form-item label="年龄">
-					<el-input-number v-model="editForm.age" :min="0" :max="200"></el-input-number>
+				<el-form-item>
+					<template slot-scope="scope">
+					     <img :src="editForm.topImage"  min-width="70" height="70" />
+					</template>
 				</el-form-item>
-				<el-form-item label="生日">
-					<el-date-picker type="date" placeholder="选择日期" v-model="editForm.birth"></el-date-picker>
-				</el-form-item>
-				<el-form-item label="地址">
-					<el-input type="textarea" v-model="editForm.addr"></el-input>
-				</el-form-item>
+				<el-upload
+				  class="upload-demo"
+				  action="http://localhost:9204/file/upload"
+				  limit="1"
+				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,2)}"
+				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,2)}"
+				  :on-change="function (res, file,fileList) { return handleChange(res, file,2)}"
+				  :file-list="fileList"
+				  list-type="picture">
+				  <el-button size="small" type="primary">点击上传</el-button>
+				  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+				 </el-upload>
 			</el-form>
 			<div slot="footer" class="dialog-footer">
 				<el-button @click.native="editFormVisible = false">取消</el-button>
@@ -73,24 +97,26 @@
 		<!--新增界面-->
 		<el-dialog title="新增" v-model="addFormVisible" :close-on-click-modal="false">
 			<el-form :model="addForm" label-width="80px" :rules="addFormRules" ref="addForm">
-				<el-form-item label="姓名" prop="name">
-					<el-input v-model="addForm.name" auto-complete="off"></el-input>
+				
+				<el-form-item label="话题名">
+					<el-input v-model="addForm.topName" :min="0" :max="200"></el-input>
 				</el-form-item>
-				<el-form-item label="性别">
-					<el-radio-group v-model="addForm.sex">
-						<el-radio class="radio" :label="1">男</el-radio>
-						<el-radio class="radio" :label="0">女</el-radio>
-					</el-radio-group>
+				<el-form-item label="话题备注">
+					<el-input v-model="addForm.topNote" :min="0" :max="200"></el-input>
 				</el-form-item>
-				<el-form-item label="年龄">
-					<el-input-number v-model="addForm.age" :min="0" :max="200"></el-input-number>
-				</el-form-item>
-				<el-form-item label="生日">
-					<el-date-picker type="date" placeholder="选择日期" v-model="addForm.birth"></el-date-picker>
-				</el-form-item>
-				<el-form-item label="地址">
-					<el-input type="textarea" v-model="addForm.addr"></el-input>
-				</el-form-item>
+				<el-upload
+				  class="upload-demo"
+				  action="http://localhost:9204/file/upload"
+				  limit="1"
+				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,1)}"
+				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,1)}"
+				  :on-change="function (res, file,fileList) { return handleChange(res, file,1)}"
+				  :file-list="fileList"
+				  list-type="picture">
+				  <el-button size="small" type="primary">点击上传</el-button>
+				  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+				</el-upload>
+				
 			</el-form>
 			<div slot="footer" class="dialog-footer">
 				<el-button @click.native="addFormVisible = false">取消</el-button>
@@ -102,15 +128,18 @@
 
 <script>
 	import util from '../../common/js/util';
-	import axios from 'axios';;
+	import axios from 'axios';
 	//import NProgress from 'nprogress'
-	import { getTopicListPage, removeUser, batchRemoveUser, editUser, addUser,getList } from '../../api/api';
+	import { getTopicListPage, deleteTopic, batchRemoveUser, editUser, saveTopic,getList } from '../../api/api';
 
 	export default {
 		data() {
 			return {
+				fileList: [],
 				filters: {
-					
+					topName: '',
+					topNote: '',
+					topImage: ''
 				},
 				topics: [],
 				total: 0,
@@ -130,12 +159,9 @@
 				},
 				//编辑界面数据
 				editForm: {
-					id: 0,
-					name: '',
-					sex: -1,
-					age: 0,
-					birth: '',
-					addr: ''
+					topName: '',
+					topNote: '',
+					topImage: ''
 				},
 
 				addFormVisible: false,//新增界面是否显示
@@ -147,16 +173,51 @@
 				},
 				//新增界面数据
 				addForm: {
-					name: '',
-					sex: -1,
-					age: 0,
-					birth: '',
-					addr: ''
+					topName: '',
+					topNote: '',
+					topImage: ''
 				}
 
 			}
 		},
 		methods: {
+			// 文件上传
+			handleSuccess(res, file, fileList,sign) {
+				if(res.code === 1){
+					//更新图片地址
+					switch (sign){
+						case 1:
+							this.addForm.topImage = res.data; //新增
+							break;
+						case 2:
+							this.editForm.topImage = res.data; //编辑
+							break;
+					}
+					
+				}else{
+					alert("上传失败");
+				}
+				
+			},
+			handleChange(file, fileList,sign) {
+				//只展示一张图
+				if(fileList !== null){
+					this.fileList = fileList.splice(0,1);
+				} 
+			},
+			handleRemove(file, fileList,sign) {
+				//清空图片路径
+				switch (sign){
+					case 1:
+						this.addForm.topImage = ''; //新增
+						break;
+					case 2:
+						this.editForm.topImage = ''; //编辑
+						break;
+				}
+				
+			},
+			
 			//性别显示转换
 			formatSex: function (row, column) {
 				return row.sex == 1 ? '男' : row.sex == 0 ? '女' : '未知';
@@ -165,27 +226,13 @@
 				this.page = val;
 				this.getTopics();
 			},
-			//获取用户列表
+			//获取话题列表
 			getTopics() {
-				let para = {
-					page: this.page,
-				};
-				let body = {
-					//name: this.filters
-				};
+				let page = this.page;
+				let body = this.filters;
 				this.listLoading = true;
 				//NProgress.start();
-				// getTopicListPage(para,body).then((res) => {
-				// 	this.total = res.data.data.total;
-				// 	this.topics = res.data.data.records;
-				// 	this.listLoading = false;
-				// 	//NProgress.done();
-				// }).catch(function (error) {
-				// 	console.log("失败");
-				//     console.log(error);
-				//   })
-				// ;
-				getList(para).then((res) => {
+				getTopicListPage(page,body).then((res) => {
 					this.total = res.data.data.total;
 					this.topics = res.data.data.records;
 					this.listLoading = false;
@@ -195,6 +242,11 @@
 				    console.log(error);
 				  })
 				;
+				
+			},
+			//重置搜索框
+			reset(){
+				this.$refs.search.resetFields()
 			},
 			//删除
 			handleDel: function (index, row) {
@@ -203,8 +255,8 @@
 				}).then(() => {
 					this.listLoading = true;
 					//NProgress.start();
-					let para = { id: row.id };
-					removeUser(para).then((res) => {
+					let para = row.id;
+					deleteTopic(para).then((res) => {
 						this.listLoading = false;
 						//NProgress.done();
 						this.$message({
@@ -240,9 +292,8 @@
 						this.$confirm('确认提交吗？', '提示', {}).then(() => {
 							this.editLoading = true;
 							//NProgress.start();
-							let para = Object.assign({}, this.editForm);
-							para.birth = (!para.birth || para.birth == '') ? '' : util.formatDate.format(new Date(para.birth), 'yyyy-MM-dd');
-							editUser(para).then((res) => {
+							let para = this.editForm;
+							saveTopic(para).then((res) => {
 								this.editLoading = false;
 								//NProgress.done();
 								this.$message({
@@ -252,7 +303,10 @@
 								this.$refs['editForm'].resetFields();
 								this.editFormVisible = false;
 								this.getTopics();
-							});
+							}).catch(function (error) {
+								console.log("提交失败");
+							
+							  });
 						});
 					}
 				});
@@ -264,9 +318,9 @@
 						this.$confirm('确认提交吗？', '提示', {}).then(() => {
 							this.addLoading = true;
 							//NProgress.start();
-							let para = Object.assign({}, this.addForm);
-							para.birth = (!para.birth || para.birth == '') ? '' : util.formatDate.format(new Date(para.birth), 'yyyy-MM-dd');
-							addUser(para).then((res) => {
+							let para = this.addForm;
+							// para.birth = (!para.birth || para.birth == '') ? '' : util.formatDate.format(new Date(para.birth), 'yyyy-MM-dd');
+							saveTopic(para).then((res) => {
 								this.addLoading = false;
 								//NProgress.done();
 								this.$message({
