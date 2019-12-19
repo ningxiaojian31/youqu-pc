@@ -44,7 +44,7 @@
 					      </el-popover>
 				</template>
 			</el-table-column>
-			<el-table-column prop="createTime" label="创建时间" width="180" sortable>
+			<el-table-column prop="createTime" label="创建时间" width="200" :formatter="formatter" sortable>
 			</el-table-column>
 			<el-table-column label="操作" width="180">
 				<template scope="scope">
@@ -77,7 +77,7 @@
 				</el-form-item>
 				<el-upload
 				  class="upload-demo"
-				  action="http://localhost:9204/file/upload"
+				  action="http://localhost:9999/qiniu/file/upload"
 				  limit="1"
 				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,2)}"
 				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,2)}"
@@ -106,7 +106,7 @@
 				</el-form-item>
 				<el-upload
 				  class="upload-demo"
-				  action="http://localhost:9204/file/upload"
+				  action="http://localhost:9999/qiniu/file/upload"
 				  limit="1"
 				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,1)}"
 				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,1)}"
@@ -181,6 +181,12 @@
 			}
 		},
 		methods: {
+			//日期转换
+			formatter(row, column) {
+				var originDate = Date.parse(row.createTime);
+				var date = new Date(originDate);
+				return date.toLocaleString();
+			},
 			// 文件上传
 			handleSuccess(res, file, fileList,sign) {
 				if(res.code === 1){

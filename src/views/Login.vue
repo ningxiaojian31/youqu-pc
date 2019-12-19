@@ -54,17 +54,23 @@
             requestLogin(loginParams).then(data => {
               this.logining = false;
               //NProgress.done();
-              let { msg, code, user } = data;
-              if (code !== 200) {
-                this.$message({
-                  message: msg,
-                  type: 'error'
-                });
+			  let msg = data.msg;
+			  let code = data.code;
+			  let user = data.data;
+              if (code === 1) {
+				sessionStorage.setItem('user', JSON.stringify(user));
+				this.$router.push({ path: '/table' });
               } else {
-                sessionStorage.setItem('user', JSON.stringify(user));
-                this.$router.push({ path: '/table' });
+				  this.$message({
+				    message: user,
+				    type: 'error'
+				  });
               }
-            });
+			 
+            }).catch(err => {
+				console(err.msg);
+				 this.logining = false;
+			});
           } else {
             console.log('error submit!!');
             return false;
