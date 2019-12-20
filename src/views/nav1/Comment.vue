@@ -24,16 +24,16 @@
 		</el-form>
 
 		<!--列表-->
-		<el-table :data="topics" highlight-current-row v-loading="listLoading" @selection-change="selsChange" style="width: 100%;">
+		<el-table :data="topics" highlight-current-row v-loading="listLoading"  style="width: 100%;">
 			<el-table-column type="selection" width="55">
 			</el-table-column>
-			<el-table-column prop="id" label="ID" width="120" sortable>
+			<el-table-column prop="id" label="ID" width="120">
 			</el-table-column>
-			<el-table-column prop="topName" label="话题名" width="180" sortable>
+			<el-table-column prop="topName" label="话题名" width="180">
 			</el-table-column>
-			<el-table-column prop="topNote" label="话题备注" width="180"  sortable>
+			<el-table-column prop="topNote" label="话题备注" width="180">
 			</el-table-column>
-			<el-table-column prop="topImage" label="话题图片" width="180" sortable>
+			<el-table-column prop="topImage" label="话题图片" width="180">
 				<template slot-scope="scope">     
 					   <el-popover
 					       placement="right"
@@ -44,7 +44,7 @@
 					      </el-popover>
 				</template>
 			</el-table-column>
-			<el-table-column prop="createTime" label="创建时间" width="200" :formatter="formatter" sortable>
+			<el-table-column prop="createTime" label="创建时间" width="200" :formatter="formatter">
 			</el-table-column>
 			<el-table-column label="操作" width="180">
 				<template scope="scope">
@@ -57,7 +57,15 @@
 		<!--工具条-->
 		<el-col :span="24" class="toolbar">
 			<el-button type="danger" @click="batchRemove" :disabled="this.sels.length===0">批量删除</el-button>
-			<el-pagination layout="prev, pager, next" @current-change="handleCurrentChange" :page-size="20" :total="total" style="float:right;">
+			<el-pagination
+			        @size-change="handleSizeChange"
+			        @current-change="handleCurrentChange"
+			        :current-page="this.page.currentPage"
+			        :page-sizes="[5, 10, 20, 40]"
+			        :page-size="this.page.pageSize"        
+			        layout="total, sizes, prev, pager, next, jumper"
+			        :total="total" 
+					style="float:right;">    
 			</el-pagination>
 		</el-col>
 
@@ -77,7 +85,7 @@
 				</el-form-item>
 				<el-upload
 				  class="upload-demo"
-				  action="http://localhost:9999/qiniu/file/upload"
+				  :action=url
 				  limit="1"
 				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,2)}"
 				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,2)}"
@@ -106,7 +114,7 @@
 				</el-form-item>
 				<el-upload
 				  class="upload-demo"
-				  action="http://localhost:9999/qiniu/file/upload"
+				  :action=url
 				  limit="1"
 				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,1)}"
 				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,1)}"
@@ -130,24 +138,25 @@
 	import util from '../../common/js/util';
 	import axios from 'axios';
 	//import NProgress from 'nprogress'
-	import { getTopicListPage, deleteTopic, batchRemoveUser, editUser, saveTopic,getList } from '../../api/api';
+	import { getTopicListPage, deleteTopic, saveTopic,uploadURL } from '../../api/api';
 
 	export default {
 		data() {
 			return {
-				fileList: [],
-				filters: {
+				url: `${uploadURL}/qiniu/file/upload`,//文件上传路径
+				fileList: [],//上传的文件列表
+				filters: {   //搜索栏
 					topName: '',
 					topNote: '',
 					topImage: ''
 				},
-				topics: [],
-				total: 0,
+				topics: [], //列表数据
+				total: 0, //分页
 				page: {
 					currentPage: 1,
 					pageSize: 10
 				},
-				listLoading: false,
+				listLoading: false, //列表加载
 				sels: [],//列表选中列
 
 				editFormVisible: false,//编辑界面是否显示
@@ -181,6 +190,15 @@
 			}
 		},
 		methods: {
+			//分页
+			handleSizeChange: function (size) {
+			    this.page.pageSize = size;
+				this.getTopics();  //每页下拉显示数据
+			},
+			handleCurrentChange: function(currentPage){
+			    this.page.currentPage = currentPage;
+				this.getTopics(); //点击第几页
+			},
 			//日期转换
 			formatter(row, column) {
 				var originDate = Date.parse(row.createTime);
@@ -228,10 +246,6 @@
 			formatSex: function (row, column) {
 				return row.sex == 1 ? '男' : row.sex == 0 ? '女' : '未知';
 			},
-			handleCurrentChange(val) {
-				this.page = val;
-				this.getTopics();
-			},
 			//获取话题列表
 			getTopics() {
 				let page = this.page;
@@ -239,13 +253,23 @@
 				this.listLoading = true;
 				//NProgress.start();
 				getTopicListPage(page,body).then((res) => {
-					this.total = res.data.data.total;
-					this.topics = res.data.data.records;
 					this.listLoading = false;
+					if(res.data.code === 1){
+						this.total = res.data.data.total;
+						this.topics = res.data.data.records;
+					}else{
+						alert(res.data.msg);
+					}
+					
 					//NProgress.done();
-				}).catch(function (error) {
-					console.log("失败");
-				    console.log(error);
+				}).catch((error) => {
+					this.listLoading = false;
+					if(error.response.status === 405){
+						alert(error.response.data.data);
+						this.$router.push({ path: '/login' });
+					}else{
+						alert(error.response.data.data);
+					}
 				  })
 				;
 				
@@ -271,8 +295,14 @@
 						});
 						this.getTopics();
 					});
-				}).catch(() => {
-
+				}).catch((error) => {
+                     this.listLoading = false;
+                     if(error.response.status === 405){
+                     	alert(error.response.data.data);
+                     	this.$router.push({ path: '/login' });
+                     }else{
+                     	alert(error.response.data.data);
+                     }
 				});
 			},
 			//显示编辑界面
@@ -284,11 +314,9 @@
 			handleAdd: function () {
 				this.addFormVisible = true;
 				this.addForm = {
-					name: '',
-					sex: -1,
-					age: 0,
-					birth: '',
-					addr: ''
+					topName: '',
+					topNote: '',
+					topImage: ''
 				};
 			},
 			//编辑
@@ -309,8 +337,14 @@
 								this.$refs['editForm'].resetFields();
 								this.editFormVisible = false;
 								this.getTopics();
-							}).catch(function (error) {
-								console.log("提交失败");
+							}).catch((error) => {
+								this.listLoading = false;
+								if(error.response.status === 405){
+									alert(error.response.data.data);
+									this.$router.push({ path: '/login' });
+								}else{
+									alert(error.response.data.data);
+								}
 							
 							  });
 						});
@@ -336,6 +370,14 @@
 								this.$refs['addForm'].resetFields();
 								this.addFormVisible = false;
 								this.getTopics();
+							}).catch((error) => {
+								this.listLoading = false;
+								if(error.response.status === 405){
+									alert(error.response.data.data);
+									this.$router.push({ path: '/login' });
+								}else{
+									alert(error.response.data.data);
+								}
 							});
 						});
 					}

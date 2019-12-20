@@ -1,8 +1,10 @@
 import axios from 'axios';
 import qs from 'qs';
-// axios.defaults.timeout = 5000;
-axios.defaults.baseURL = 'http://localhost:9999'
-axios.defaults.headers.post['Content-Type'] = 'application/json';
+export const uploadURL = 'http://localhost:9999'; //图片上传路径
+axios.defaults.baseURL = 'http://localhost:9999'; //网络请求路径
+axios.defaults.headers.post['Content-Type'] = 'application/json'; //设置post请求方式
+
+
 
 
 

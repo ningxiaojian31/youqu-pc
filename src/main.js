@@ -13,11 +13,19 @@ import routes from './routes'
 //import Mock from './mock'
 //Mock.bootstrap();
 import 'font-awesome/css/font-awesome.min.css'
+import axios from 'axios';
 
 Vue.use(ElementUI)
 Vue.use(VueRouter)
 Vue.use(Vuex)
 
+//设置请求头token
+const user = localStorage.getItem('user');
+if(user !== null && user !== ''){
+	axios.defaults.headers.common["token"] = JSON.parse(user).token; 
+}
+
+Vue.prototype.$uploadURL = 'http://localhost:9999';
 
 //NProgress.configure({ showSpinner: false });
 
@@ -28,9 +36,9 @@ const router = new VueRouter({
 router.beforeEach((to, from, next) => {
   //NProgress.start();
   if (to.path == '/login') {
-    sessionStorage.removeItem('user');
+    localStorage.removeItem('user');
   }
-  let user = JSON.parse(sessionStorage.getItem('user'));
+  let user = JSON.parse(localStorage.getItem('user'));
   if (!user && to.path != '/login') {
     next({ path: '/login' })
   } else {

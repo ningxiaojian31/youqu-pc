@@ -17,6 +17,7 @@
 
 <script>
   import { requestLogin } from '../api/api';
+  import axios from 'axios';
   //import NProgress from 'nprogress'
   export default {
     data() {
@@ -47,7 +48,7 @@
         var _this = this;
         this.$refs.ruleForm2.validate((valid) => {
           if (valid) {
-            //_this.$router.replace('/table');
+            //_this.$router.replace('/topic');
             this.logining = true;
             //NProgress.start();
             var loginParams = { username: this.ruleForm2.account, password: this.ruleForm2.checkPass };
@@ -58,8 +59,12 @@
 			  let code = data.code;
 			  let user = data.data;
               if (code === 1) {
-				sessionStorage.setItem('user', JSON.stringify(user));
-				this.$router.push({ path: '/table' });
+				 //存储用户数据，包含token
+				 if(user !== null){
+				 	axios.defaults.headers.common["token"] = user.token; 
+				 }
+				localStorage.setItem('user', JSON.stringify(user));
+				this.$router.push({ path: '/topic' });
               } else {
 				  this.$message({
 				    message: user,
