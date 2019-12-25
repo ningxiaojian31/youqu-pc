@@ -91,6 +91,7 @@
 				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,2)}"
 				  :on-change="function (res, file,fileList) { return handleChange(res, file,2)}"
 				  :file-list="fileList"
+				  :headers="headers"
 				  list-type="picture">
 				  <el-button size="small" type="primary">点击上传</el-button>
 				  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
@@ -120,6 +121,7 @@
 				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,1)}"
 				  :on-change="function (res, file,fileList) { return handleChange(res, file,1)}"
 				  :file-list="fileList"
+				  :headers="headers"
 				  list-type="picture">
 				  <el-button size="small" type="primary">点击上传</el-button>
 				  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
@@ -143,6 +145,7 @@
 	export default {
 		data() {
 			return {
+				headers: {token: JSON.parse(localStorage.getItem('user')).token}, //加token
 				url: `${uploadURL}/qiniu/file/upload`,//文件上传路径
 				fileList: [],//上传的文件列表
 				filters: {   //搜索栏

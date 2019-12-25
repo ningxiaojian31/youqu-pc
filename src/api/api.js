@@ -6,16 +6,29 @@ axios.defaults.headers.post['Content-Type'] = 'application/json'; //设置post�
 
 
 
+export const requestLogin = params => { return axios.post('/user/tUser/admin/login', params).then(res => res.data); };
 
 
-export const getTopicListPage = (params,data) => { return axios.post('/invitation/tTopic/gets'+'?'+qs.stringify(params),data); };
+export const getTopicListPage = (params,data) => { return axios.post('/invitation/tTopic/list'+'?'+qs.stringify(params),data); };
 
 export const saveTopic = data => { return axios.post('/invitation/tTopic/save', data); };
 
 export const deleteTopic = params => { return axios.delete('/invitation/tTopic/del/'+params); };
 
 
-export const requestLogin = params => { return axios.post(`/user/tUser/admin/login`, params).then(res => res.data); };
+export const getInvitationListPage = (params,data) => { return axios.post('/invitation/tInvitation/list'+'?'+qs.stringify(params),data); };
+
+export const saveInvitation = data => { return axios.post('/invitation/tInvitation/save', data); };
+
+export const deleteInvitation = params => { return axios.delete('/invitation/tInvitation/del/'+params); };
+
+
+export const getCommentListPage = (params,data) => { return axios.post('/invitation/tComment/list'+'?'+qs.stringify(params),data); };
+
+export const saveComment = data => { return axios.post('/invitation/tComment/save', data); };
+
+export const deleteComment = params => { return axios.delete('/invitation/tComment/del/'+params); };
+
 
 export const getUserList = params => { return axios.get(`/user/list`, { params: params }); };
 

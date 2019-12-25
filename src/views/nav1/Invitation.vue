@@ -3,14 +3,30 @@
 		<!--工具条-->
 		<el-col :span="240" class="toolbar" style="padding-bottom: 0px;">
 			<el-form :inline="true" :model="filters" ref='search'>
-				<el-form-item  label="话题名" prop="topName">
+				<el-form-item  label="帖子内容" prop="invContent">
+					<el-input v-model="filters.invContent" ></el-input>
+				</el-form-item>
+				<el-form-item label="帖子类型">
+					<el-select v-model="filters.invType" placeholder="请选择" width="150" clearable>
+					    <el-option
+					      v-for="item in options"
+					      :key="item.key"
+					      :label="item.label"
+					      :value="item.value">
+					    </el-option>
+					 </el-select>
+				</el-form-item>
+				<el-form-item  label="话题" prop="topName">
 					<el-input v-model="filters.topName" ></el-input>
 				</el-form-item>
-				<el-form-item  label="话题备注" prop="topNote">
-					<el-input v-model="filters.topNote" ></el-input>
+				<el-form-item  label="点赞数" prop="invLaud">
+					<el-input v-model="filters.invLaud" ></el-input>
+				</el-form-item>
+				<el-form-item  label="分享数" prop="invShare">
+					<el-input v-model="filters.invShare" ></el-input>
 				</el-form-item>
 				<el-form-item>
-					<el-button type="primary" v-on:click="getTopics">查询</el-button>
+					<el-button type="primary" v-on:click="getInvitations">查询</el-button>
 				</el-form-item>
 				<el-form-item>
 					<el-button  v-on:click="reset">重置</el-button>
@@ -24,25 +40,45 @@
 		</el-form>
 
 		<!--列表-->
-		<el-table :data="topics" highlight-current-row v-loading="listLoading"  style="width: 100%;">
+		<el-table :data="invitations" highlight-current-row v-loading="listLoading"  style="width: 100%;">
 			<el-table-column type="selection" width="55">
 			</el-table-column>
 			<el-table-column prop="id" label="ID" width="120">
 			</el-table-column>
-			<el-table-column prop="topName" label="话题名" width="180">
+			<el-table-column prop="invContent" label="帖子内容" width="150">
 			</el-table-column>
-			<el-table-column prop="topNote" label="话题备注" width="180">
+			<el-table-column prop="invType" label="帖子类型" width="150">
 			</el-table-column>
-			<el-table-column prop="topImage" label="话题图片" width="180">
+			<el-table-column prop="invImage" label="帖子图片" width="150">
 				<template slot-scope="scope">     
 					   <el-popover
 					       placement="right"
 					       title=""
 					       trigger="click">
-					       <img :src="scope.row.topImage" min-width="300px" height="300px"/>
-					       <img slot="reference" :src="scope.row.topImage" :alt="scope.row.topImage" style="max-height: 70px;max-width: 70px">
+					       <img :src="scope.row.invImage" min-width="300px" height="300px"/>
+					       <img slot="reference" :src="scope.row.invImage" :alt="scope.row.invImage" style="max-height: 70px;max-width: 70px">
 					      </el-popover>
 				</template>
+			</el-table-column>
+			<el-table-column prop="invVideo" label="帖子视频" width="150">
+				<template slot-scope="scope">     
+					   <el-popover
+					       placement="right"
+					       title=""
+					       trigger="hover">
+					       <video v-if="scope.row.invVideo !== ''" :src="scope.row.invVideo" controls="controls" min-width="300px" height="300px"/>
+					       <video slot="reference" :src="scope.row.invVideo" :alt="scope.row.invVideo" style="max-height: 70px;max-width: 70px"/>
+					    </el-popover>
+				</template>
+			
+			</el-table-column> -->
+			<!-- <el-table-column prop="invVideo" label="帖子视频" width="150">
+			</el-table-column> -->
+			<el-table-column prop="topName" label="话题" width="150">
+			</el-table-column>
+			<el-table-column prop="invLaud" label="点赞数" width="150">
+			</el-table-column>
+			<el-table-column prop="invShare" label="分享数" width="150">
 			</el-table-column>
 			<el-table-column prop="createTime" label="创建时间" width="200" :formatter="formatter">
 			</el-table-column>
@@ -91,6 +127,7 @@
 				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,2)}"
 				  :on-change="function (res, file,fileList) { return handleChange(res, file,2)}"
 				  :file-list="fileList"
+				  :headers="headers"
 				  list-type="picture">
 				  <el-button size="small" type="primary">点击上传</el-button>
 				  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
@@ -106,13 +143,44 @@
 		<el-dialog title="新增" v-model="addFormVisible" :close-on-click-modal="false">
 			<el-form :model="addForm" label-width="80px" :rules="addFormRules" ref="addForm">
 				
-				<el-form-item label="话题名">
-					<el-input v-model="addForm.topName" :min="0" :max="200"></el-input>
+				<el-form-item  label="帖子内容" prop="invContent">
+					<el-input v-model="addForm.invContent" ></el-input>
 				</el-form-item>
-				<el-form-item label="话题备注">
-					<el-input v-model="addForm.topNote" :min="0" :max="200"></el-input>
+				<el-form-item label="帖子类型">
+					<el-select v-model="addForm.invType" @change="selectType" placeholder="请选择" width="150" clearable>
+					    <el-option
+					      v-for="item in options"
+					      :key="item.key"
+					      :label="item.label"
+					      :value="item.value">
+					    </el-option>
+					 </el-select>
+				</el-form-item>
+				<el-form-item label="话题">
+					<el-select v-model="addForm.topId" placeholder="请选择" width="150" clearable>
+					    <el-option
+					      v-for="item in topics"
+					      :key="item.topName"
+					      :label="item.topName"
+					      :value="item.id">
+					    </el-option>
+					 </el-select>
 				</el-form-item>
 				<el-upload
+				  v-show="showPicture"
+				  class="upload-demo"
+				  :action=url
+				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,1)}"
+				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,1)}"
+				  :on-change="function (res, file,fileList) { return handleChange(res, file,1)}"
+				  :file-list="fileList"
+				  :headers="headers"
+				  list-type="picture">
+				  <el-button size="small" type="primary">图片上传</el-button>
+				  <div slot="tip" class="el-upload__tip">只能上传jpg/png等图片文件，且不超过10MB</div>
+				</el-upload>
+				<el-upload
+				  v-show="showVideo"
 				  class="upload-demo"
 				  :action=url
 				  limit="1"
@@ -120,9 +188,10 @@
 				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,1)}"
 				  :on-change="function (res, file,fileList) { return handleChange(res, file,1)}"
 				  :file-list="fileList"
+				  :headers="headers"
 				  list-type="picture">
-				  <el-button size="small" type="primary">点击上传</el-button>
-				  <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+				  <el-button size="small" type="primary">视频上传</el-button>
+				  <div slot="tip" class="el-upload__tip">只能上传视频文件，且不超过100MB</div>
 				</el-upload>
 				
 			</el-form>
@@ -138,19 +207,34 @@
 	import util from '../../common/js/util';
 	import axios from 'axios';
 	//import NProgress from 'nprogress'
-	import { getTopicListPage, deleteTopic, saveTopic,uploadURL } from '../../api/api';
+	import { getInvitationListPage, deleteInvitation, saveInvitation,uploadURL,getTopicListPage } from '../../api/api';
 
 	export default {
 		data() {
 			return {
+				headers: {token: JSON.parse(localStorage.getItem('user')).token}, //加token
 				url: `${uploadURL}/qiniu/file/upload`,//文件上传路径
 				fileList: [],//上传的文件列表
 				filters: {   //搜索栏
-					topName: '',
-					topNote: '',
-					topImage: ''
+					invContent: '',
+					invType: null,
+					invLaud: '',
+					invShare: '',
+					topName: ''
 				},
-				topics: [], //列表数据
+				options: [{
+				        key: '选项1',
+				        label: '图片',
+			            value: 1
+				    }, {
+				        key: '选项2',
+				        label: '视频',
+						value:2
+				 }],
+				topics: [],
+				invitations: [], //列表数据
+				showPicture: false, //图片视频控件的显示和隐藏
+				showVideo: false,
 				total: 0, //分页
 				page: {
 					currentPage: 1,
@@ -182,9 +266,11 @@
 				},
 				//新增界面数据
 				addForm: {
-					topName: '',
-					topNote: '',
-					topImage: ''
+					invContent: '',
+					invType: null,
+					topId: null,
+					invImage: '',
+					invVideo: ''
 				}
 
 			}
@@ -193,11 +279,11 @@
 			//分页
 			handleSizeChange: function (size) {
 			    this.page.pageSize = size;
-				this.getTopics();  //每页下拉显示数据
+				this.getInvitations();  //每页下拉显示数据
 			},
 			handleCurrentChange: function(currentPage){
 			    this.page.currentPage = currentPage;
-				this.getTopics(); //点击第几页
+				this.getInvitations(); //点击第几页
 			},
 			//日期转换
 			formatter(row, column) {
@@ -205,16 +291,29 @@
 				var date = new Date(originDate);
 				return date.toLocaleString();
 			},
-			// 文件上传
+			//选中图片、视频
+			selectType: function(type){
+				if(type !== null && type ===1){
+					this.showPicture = true;
+					this.showVideo = false;
+				}else if(type !== null && type ===2){
+					this.showPicture = false;
+					this.showVideo = true;
+				}else{
+					this.showPicture = false;
+					this.showVideo = false;
+				}
+			},
+			// 文件上传(图片可多张，视频不可)
 			handleSuccess(res, file, fileList,sign) {
 				if(res.code === 1){
 					//更新图片地址
 					switch (sign){
 						case 1:
-							this.addForm.topImage = res.data; //新增
+							this.addForm.invImage = this.addForm.invImage +','+res.data; //图片多张
 							break;
 						case 2:
-							this.editForm.topImage = res.data; //编辑
+							this.addForm.invVideo = res.data; //视频唯一
 							break;
 					}
 					
@@ -233,10 +332,10 @@
 				//清空图片路径
 				switch (sign){
 					case 1:
-						this.addForm.topImage = ''; //新增
+						this.addForm.invImage = ''; //新增
 						break;
 					case 2:
-						this.editForm.topImage = ''; //编辑
+						this.editForm.invImage = ''; //编辑
 						break;
 				}
 				
@@ -247,16 +346,23 @@
 				return row.sex == 1 ? '男' : row.sex == 0 ? '女' : '未知';
 			},
 			//获取话题列表
-			getTopics() {
+			getInvitations() {
 				let page = this.page;
 				let body = this.filters;
 				this.listLoading = true;
 				//NProgress.start();
-				getTopicListPage(page,body).then((res) => {
+				getInvitationListPage(page,body).then((res) => {
 					this.listLoading = false;
 					if(res.data.code === 1){
 						this.total = res.data.data.total;
-						this.topics = res.data.data.records;
+						this.invitations = res.data.data.records;
+						for(var item = 0; item < this.invitations.length; item ++){
+							if(this.invitations[item].invType === 1){
+								this.invitations[item].invType = '图片';
+							}else{
+								this.invitations[item].invType = '视频';
+							}
+						}
 					}else{
 						alert(res.data.msg);
 					}
@@ -274,9 +380,32 @@
 				;
 				
 			},
+			//获取话题列表
+			getTopics() {
+				let page ={
+					currentPage: 1,
+					pageSize: 100,
+			    }
+				let body = this.filters;
+				//NProgress.start();
+				getTopicListPage(page,body).then((res) => {
+					if(res.data.code === 1){
+						this.total = res.data.data.total;
+						this.topics = res.data.data.records;
+					}else{
+						alert(res.data.msg);
+					}
+					
+					//NProgress.done();
+				}).catch((error) => {
+					alert(error.response.data.data);
+				  })
+				;
+				
+			},
 			//重置搜索框
 			reset(){
-				this.$refs.search.resetFields()
+				this.$refs.search.resetFields();
 			},
 			//删除
 			handleDel: function (index, row) {
@@ -286,14 +415,14 @@
 					this.listLoading = true;
 					//NProgress.start();
 					let para = row.id;
-					deleteTopic(para).then((res) => {
+					deleteInvitation(para).then((res) => {
 						this.listLoading = false;
 						//NProgress.done();
 						this.$message({
 							message: '删除成功',
 							type: 'success'
 						});
-						this.getTopics();
+						this.getInvitations();
 					});
 				}).catch((error) => {
                      this.listLoading = false;
@@ -327,7 +456,7 @@
 							this.editLoading = true;
 							//NProgress.start();
 							let para = this.editForm;
-							saveTopic(para).then((res) => {
+							saveInvitation(para).then((res) => {
 								this.editLoading = false;
 								//NProgress.done();
 								this.$message({
@@ -336,7 +465,7 @@
 								});
 								this.$refs['editForm'].resetFields();
 								this.editFormVisible = false;
-								this.getTopics();
+								this.getInvitations();
 							}).catch((error) => {
 								this.listLoading = false;
 								if(error.response.status === 405){
@@ -360,7 +489,7 @@
 							//NProgress.start();
 							let para = this.addForm;
 							// para.birth = (!para.birth || para.birth == '') ? '' : util.formatDate.format(new Date(para.birth), 'yyyy-MM-dd');
-							saveTopic(para).then((res) => {
+							saveInvitation(para).then((res) => {
 								this.addLoading = false;
 								//NProgress.done();
 								this.$message({
@@ -369,7 +498,7 @@
 								});
 								this.$refs['addForm'].resetFields();
 								this.addFormVisible = false;
-								this.getTopics();
+								this.getInvitations();
 							}).catch((error) => {
 								this.listLoading = false;
 								if(error.response.status === 405){
@@ -402,7 +531,7 @@
 							message: '删除成功',
 							type: 'success'
 						});
-						this.getTopics();
+						this.getInvitations();
 					});
 				}).catch(() => {
 
@@ -410,6 +539,7 @@
 			}
 		},
 		mounted() {
+			this.getInvitations();
 			this.getTopics();
 		}
 	}
