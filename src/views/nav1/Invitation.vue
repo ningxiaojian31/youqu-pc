@@ -49,16 +49,17 @@
 			</el-table-column>
 			<el-table-column prop="invType" label="帖子类型" width="150">
 			</el-table-column>
-			<el-table-column prop="invImage" label="帖子图片" width="150">
-				<template slot-scope="scope">     
-					   <el-popover
-					       placement="right"
-					       title=""
-					       trigger="click">
-					       <img :src="scope.row.invImage" min-width="300px" height="300px"/>
-					       <img slot="reference" :src="scope.row.invImage" :alt="scope.row.invImage" style="max-height: 70px;max-width: 70px">
-					      </el-popover>
-				</template>
+			<!-- 这里留了个bug,因为不会遍历imge,只显示了一张图 -->
+			<el-table-column prop="invImage"  label="帖子图片" width="150">
+					<template slot-scope="scope">
+							  <el-popover
+							      placement="right"
+							      title=""
+							      trigger="click">
+							      <img :src="scope.row.invImage" min-width="300px" height="300px"/>
+							      <img slot="reference" :src="scope.row.invImage" :alt="scope.row.invImage" style="max-height: 70px;max-width: 70px">
+							  </el-popover>
+					</template>
 			</el-table-column>
 			<el-table-column prop="invVideo" label="帖子视频" width="150">
 				<template slot-scope="scope">     
@@ -80,11 +81,14 @@
 			</el-table-column>
 			<el-table-column prop="invShare" label="分享数" width="150">
 			</el-table-column>
+			<el-table-column prop="invStatusName" label="审核状态" width="150">
+			</el-table-column>
 			<el-table-column prop="createTime" label="创建时间" width="200" :formatter="formatter">
 			</el-table-column>
-			<el-table-column label="操作" width="180">
+			<el-table-column label="操作" width="320">
 				<template scope="scope">
-					<el-button size="small" @click="handleEdit(scope.$index, scope.row)">编辑</el-button>
+					<el-button size="small" @click="handleCheckPass(scope.$index, scope.row)">审核通过</el-button>
+					<el-button size="small" @click="handleCheckNoPass(scope.$index, scope.row)">审核不通过</el-button>
 					<el-button type="danger" size="small" @click="handleDel(scope.$index, scope.row)">删除</el-button>
 				</template>
 			</el-table-column>
@@ -106,7 +110,7 @@
 		</el-col>
 
 		<!--编辑界面-->
-		<el-dialog title="编辑" v-model="editFormVisible" :close-on-click-modal="false">
+		<!-- <el-dialog title="编辑" v-model="editFormVisible" :close-on-click-modal="false">
 			<el-form :model="editForm" label-width="80px" :rules="editFormRules" ref="editForm">
 				<el-form-item label="话题名">
 					<el-input v-model="editForm.topName" :min="0" :max="200"></el-input>
@@ -137,7 +141,7 @@
 				<el-button @click.native="editFormVisible = false">取消</el-button>
 				<el-button type="primary" @click.native="editSubmit" :loading="editLoading">提交</el-button>
 			</div>
-		</el-dialog>
+		</el-dialog> -->
 
 		<!--新增界面-->
 		<el-dialog title="新增" v-model="addFormVisible" :close-on-click-modal="false">
@@ -184,9 +188,9 @@
 				  class="upload-demo"
 				  :action=url
 				  limit="1"
-				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,1)}"
-				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,1)}"
-				  :on-change="function (res, file,fileList) { return handleChange(res, file,1)}"
+				  :on-remove="function (res, file,fileList) { return handleRemove(res, file,2)}"
+				  :on-success="function (res, file,fileList) { return handleSuccess(res, file, fileList,2)}"
+				  :on-change="function (res, file,fileList) { return handleChange(res, file,2)}"
 				  :file-list="fileList"
 				  :headers="headers"
 				  list-type="picture">
@@ -213,7 +217,7 @@
 		data() {
 			return {
 				headers: {token: JSON.parse(localStorage.getItem('user')).token}, //加token
-				url: `${uploadURL}/qiniu/file/upload`,//文件上传路径
+				url: `${uploadURL}/other/qiniu/file/upload`,//文件上传路径
 				fileList: [],//上传的文件列表
 				filters: {   //搜索栏
 					invContent: '',
@@ -270,12 +274,21 @@
 					invType: null,
 					topId: null,
 					invImage: '',
-					invVideo: ''
-				}
+					invVideo: '',
+					userId: null,
+				},
+				user: null,
 
 			}
 		},
+		created: function(){
+			this.getUser();
+		},
 		methods: {
+			//获取个人登录信息
+			getUser: function(){
+				this.user = localStorage.getItem('user');
+			},
 			//分页
 			handleSizeChange: function (size) {
 			    this.page.pageSize = size;
@@ -310,10 +323,24 @@
 					//更新图片地址
 					switch (sign){
 						case 1:
-							this.addForm.invImage = this.addForm.invImage +','+res.data; //图片多张
+						    if(this.addForm.invImage != null && this.addForm.invImage != undefined && this.addForm.invImage != ''){
+								if(this.addForm.invImage.split(",").length < 3){
+									this.addForm.invImage = this.addForm.invImage +','+res.data; //图片多张
+								}else{
+									fileList.splice(3,1);
+									alert("最多只能上传三张照片");
+								}
+								
+							}else{
+								this.addForm.invImage = res.data;
+							}
 							break;
 						case 2:
+						    if(this.addForm.invVideo != '' && this.addForm.invVideo != undefined){
+								fileList.splice(0,1);
+							}
 							this.addForm.invVideo = res.data; //视频唯一
+							//alert("最多只能上传一个视频");
 							break;
 					}
 					
@@ -323,16 +350,19 @@
 				
 			},
 			handleChange(file, fileList,sign) {
-				//只展示一张图
-				if(fileList !== null){
-					this.fileList = fileList.splice(0,1);
-				} 
+				//只展示三张图
+				// debugger;
+				// if(fileList !== null && this.addForm.invImage.split(",").length > 2){
+				// 	this.fileList = fileList.splice(0,3);
+				// } 
 			},
 			handleRemove(file, fileList,sign) {
 				//清空图片路径
 				switch (sign){
 					case 1:
 						this.addForm.invImage = ''; //新增
+						this.addForm.invVideo = '';
+						this.fileList = null;
 						break;
 					case 2:
 						this.editForm.invImage = ''; //编辑
@@ -345,7 +375,7 @@
 			formatSex: function (row, column) {
 				return row.sex == 1 ? '男' : row.sex == 0 ? '女' : '未知';
 			},
-			//获取话题列表
+			//获取帖子列表
 			getInvitations() {
 				let page = this.page;
 				let body = this.filters;
@@ -359,6 +389,10 @@
 						for(var item = 0; item < this.invitations.length; item ++){
 							if(this.invitations[item].invType === 1){
 								this.invitations[item].invType = '图片';
+							    
+								var temp = this.invitations[item].invImage.split(",");
+								// 这里留了个bug,因为不会遍历imge,只显示了一张图
+								this.invitations[item].invImage = temp[0];
 							}else{
 								this.invitations[item].invType = '视频';
 							}
@@ -439,6 +473,44 @@
 				this.editFormVisible = true;
 				this.editForm = Object.assign({}, row);
 			},
+			//审核通过
+			handleCheckPass: function(index,row){
+				var para = {
+					id: row.id,
+					invStatus: 1
+				}
+				saveInvitation(para).then((res) => {
+					this.$message({
+						message: '审核成功',
+						type: 'success'
+					});
+					this.getInvitations();
+				}).catch((error) => {
+					this.$message({
+						message: '服务器出现异常啦',
+						type: 'success'
+					});
+				});
+			},
+			//审核不通过
+			handleCheckNoPass: function(index,row){
+				var para = {
+					id: row.id,
+					invStatus: 2
+				}
+				saveInvitation(para).then((res) => {
+					this.$message({
+						message: '审核成功',
+						type: 'success'
+					});
+					this.getInvitations();
+				}).catch((error) => {
+					this.$message({
+						message: '服务器出现异常啦',
+						type: 'success'
+					});
+				});
+			},
 			//显示新增界面
 			handleAdd: function () {
 				this.addFormVisible = true;
@@ -487,6 +559,7 @@
 						this.$confirm('确认提交吗？', '提示', {}).then(() => {
 							this.addLoading = true;
 							//NProgress.start();
+							this.addForm.userId = JSON.parse(this.user).id //个人id
 							let para = this.addForm;
 							// para.birth = (!para.birth || para.birth == '') ? '' : util.formatDate.format(new Date(para.birth), 'yyyy-MM-dd');
 							saveInvitation(para).then((res) => {
@@ -499,6 +572,7 @@
 								this.$refs['addForm'].resetFields();
 								this.addFormVisible = false;
 								this.getInvitations();
+								this.fileList = null;//置为null
 							}).catch((error) => {
 								this.listLoading = false;
 								if(error.response.status === 405){

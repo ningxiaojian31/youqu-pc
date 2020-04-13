@@ -5,8 +5,7 @@ import Main from './views/Main.vue'
 import Topic from './views/nav1/Topic.vue'
 import Invitation from './views/nav1/Invitation.vue'
 import Comment from './views/nav1/Comment.vue'
-import Form from './views/nav1/Form.vue'
-import user from './views/nav1/user.vue'
+import User from './views/nav1/User.vue'
 import Chat from './views/nav2/Chat.vue'
 import Log from './views/nav3/Log.vue'
 import echarts from './views/charts/echarts.vue'
@@ -32,11 +31,10 @@ let routes = [
         iconCls: 'el-icon-message',//图标样式class
         children: [
             { path: '/main', component: Main, name: '主页', hidden: true },
+			{ path: '/User', component: User, name: '用户' },
             { path: '/topic', component: Topic, name: '话题' },
 			{ path: '/invitation', component: Invitation, name: '帖子' },
 			{ path: '/comment', component: Comment, name: '评论' },
-            { path: '/form', component: Form, name: 'Form' },
-            { path: '/user', component: user, name: '列表' },
         ]
     },
     {

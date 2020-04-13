@@ -30,9 +30,25 @@ export const saveComment = data => { return axios.post('/invitation/tComment/sav
 export const deleteComment = params => { return axios.delete('/invitation/tComment/del/'+params); };
 
 
+export const getUserListPage = (params,data) => { return axios.post('/user/tUser/list'+'?'+qs.stringify(params),data); };
+
+export const deleteUser = params => { return axios.delete('/user/tUser/del/'+params); };
+
+
+export const getChatListPage = (params,data) => { return axios.post('/chat/chatrecord/list'+'?'+qs.stringify(params),data); };
+
+
+export const getLogListPage = (params,data) => { return axios.post('/other/sysLog/list'+'?'+qs.stringify(params),data); };
+
+export const deleteLog = params => { return axios.delete('/other/sysLog/del/'+params); };
+
+
+
 export const getUserList = params => { return axios.get(`/user/list`, { params: params }); };
 
 export const batchRemoveUser = params => { return axios.get(`/user/batchremove`, { params: params }); };
 
 export const editUser = params => { return axios.get(`/user/edit`, { params: params }); };
+
+
 
