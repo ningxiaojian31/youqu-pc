@@ -1,6 +1,10 @@
 # youqu-web
 “友趣社区”后台管理系统
 
+* #### 简述：
+
+   - 使用VUE+ElementUI搭建
+
 * #### 启动：
 
    1.安装node.js
